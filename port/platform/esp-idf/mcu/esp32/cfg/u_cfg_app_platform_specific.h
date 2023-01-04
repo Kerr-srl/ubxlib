@@ -104,14 +104,14 @@
 /** The ESP32 GPIO output that enables power to the cellular
  * module. -1 should be used where there is no such connection.
  */
-# define U_CFG_APP_PIN_CELL_ENABLE_POWER      2
+# define U_CFG_APP_PIN_CELL_ENABLE_POWER      -1
 #endif
 
 #ifndef U_CFG_APP_PIN_CELL_PWR_ON
 /** The ESP32 GPIO output that is connected to the PWR_ON
  * pin of the cellular module.
  */
-# define U_CFG_APP_PIN_CELL_PWR_ON            25
+# define U_CFG_APP_PIN_CELL_PWR_ON            37
 #endif
 
 #ifndef U_CFG_APP_PIN_CELL_RESET
@@ -119,7 +119,7 @@
  * pin of the cellular module; use -1 where there is no such
  * connection.
  */
-# define U_CFG_APP_PIN_CELL_RESET             -1
+# define U_CFG_APP_PIN_CELL_RESET             40
 #endif
 
 #ifndef U_CFG_APP_PIN_CELL_VINT
@@ -137,7 +137,7 @@
  * and change this value to match), otherwise this code will
  * think that the cellular module is on when in fact it is not.
  */
-# define U_CFG_APP_PIN_CELL_VINT              36
+# define U_CFG_APP_PIN_CELL_VINT              -1
 #endif
 
 #ifndef U_CFG_APP_PIN_CELL_DTR
@@ -153,14 +153,14 @@
 /** The ESP32 GPIO output pin that sends UART data to the
  * cellular module.
  */
-# define U_CFG_APP_PIN_CELL_TXD              4
+# define U_CFG_APP_PIN_CELL_TXD              39
 #endif
 
 #ifndef U_CFG_APP_PIN_CELL_RXD
 /** The ESP32 GPIO input pin that receives UART data from the
  * cellular module.
  */
-# define U_CFG_APP_PIN_CELL_RXD              15
+# define U_CFG_APP_PIN_CELL_RXD              36
 #endif
 
 #ifndef U_CFG_APP_PIN_CELL_CTS
@@ -168,7 +168,7 @@
  * indicate that data can be sent to it.  -1 should be used where
  * there is no such connection.
  */
-# define U_CFG_APP_PIN_CELL_CTS              -1
+# define U_CFG_APP_PIN_CELL_CTS              35
 #endif
 
 #ifndef U_CFG_APP_PIN_CELL_RTS
@@ -177,7 +177,7 @@
  * be used where there is no such connection. If this is *not* -1
  * then be sure to set up U_CFG_HW_CELLULAR_RTS_THRESHOLD also.
  */
-# define U_CFG_APP_PIN_CELL_RTS              -1
+# define U_CFG_APP_PIN_CELL_RTS              38
 #endif
 
 /** Macro to return the CTS pin for cellular: on some

@@ -40,6 +40,9 @@
 
 #include "u_debug_utils.h"
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 /* ----------------------------------------------------------------
  * COMPILE-TIME MACROS
  * -------------------------------------------------------------- */

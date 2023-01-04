@@ -21,8 +21,8 @@
  * instructions.
  */
 
-#include "string.h" // For strlen()
 #include "stdio.h"  // For snprintf()
+#include "string.h" // For strlen()
 
 // Bring in all of the ubxlib public header files
 #include "ubxlib.h"
@@ -35,9 +35,12 @@
 
 #ifndef U_CFG_DISABLE_TEST_AUTOMATION
 // This purely for internal u-blox testing
-# include "u_cfg_test_platform_specific.h"
-# include "u_wifi_test_cfg.h"
+#include "u_cfg_test_platform_specific.h"
+#include "u_wifi_test_cfg.h"
 #endif
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 /* ----------------------------------------------------------------
  * COMPILE-TIME MACROS
@@ -46,16 +49,16 @@
 // HTTPS server URL: this is a test server that accepts PUT/POST
 // requests and GET/HEAD/DELETE requests on port 8081; there is
 // also an HTTP server on port 8080.
-#define MY_SERVER_NAME "ubxlib.it-sgn.u-blox.com:8081"
+#define MY_SERVER_NAME "cat-fact.herokuapp.com:443"
 
 // Some data to PUT and GET with the server.
 const char *gpMyData = "Hello world!";
 
 // For u-blox internal testing only
 #ifdef U_PORT_TEST_ASSERT
-# define EXAMPLE_FINAL_STATE(x) U_PORT_TEST_ASSERT(x);
+#define EXAMPLE_FINAL_STATE(x) U_PORT_TEST_ASSERT(x);
 #else
-# define EXAMPLE_FINAL_STATE(x)
+#define EXAMPLE_FINAL_STATE(x)
 #endif
 
 #ifndef U_PORT_TEST_FUNCTION
@@ -85,29 +88,31 @@ const char *gpMyData = "Hello world!";
 // module connected via UART
 static const uDeviceCfg_t gDeviceCfg = {
     .deviceType = U_DEVICE_TYPE_SHORT_RANGE,
-    .deviceCfg = {
-        .cfgSho = {
-            .moduleType = U_CFG_TEST_SHORT_RANGE_MODULE_TYPE
+    .deviceCfg =
+        {
+            .cfgSho = {.moduleType = U_CFG_TEST_SHORT_RANGE_MODULE_TYPE},
         },
-    },
     .transportType = U_DEVICE_TRANSPORT_TYPE_UART,
-    .transportCfg = {
-        .cfgUart = {
-            .uart = U_CFG_APP_SHORT_RANGE_UART,
-            .baudRate = U_SHORT_RANGE_UART_BAUD_RATE,
-            .pinTxd = U_CFG_APP_PIN_SHORT_RANGE_TXD,
-            .pinRxd = U_CFG_APP_PIN_SHORT_RANGE_RXD,
-            .pinCts = U_CFG_APP_PIN_SHORT_RANGE_CTS,
-            .pinRts = U_CFG_APP_PIN_SHORT_RANGE_RTS
+    .transportCfg =
+        {
+            .cfgUart = {.uart = U_CFG_APP_SHORT_RANGE_UART,
+                        .baudRate = U_SHORT_RANGE_UART_BAUD_RATE,
+                        .pinTxd = U_CFG_APP_PIN_SHORT_RANGE_TXD,
+                        .pinRxd = U_CFG_APP_PIN_SHORT_RANGE_RXD,
+                        .pinCts = U_CFG_APP_PIN_SHORT_RANGE_CTS,
+                        .pinRts = U_CFG_APP_PIN_SHORT_RANGE_RTS},
         },
-    },
 };
 // NETWORK configuration for Wi-Fi
 static const uNetworkCfgWifi_t gNetworkCfg = {
     .type = U_NETWORK_TYPE_WIFI,
-    .pSsid = U_PORT_STRINGIFY_QUOTED(U_WIFI_TEST_CFG_SSID), /* Wifi SSID - replace with your SSID */
-    .authentication = U_WIFI_TEST_CFG_AUTHENTICATION, /* Authentication mode (see uWifiAuth_t in wifi/api/u_wifi.h) */
-    .pPassPhrase = U_PORT_STRINGIFY_QUOTED(U_WIFI_TEST_CFG_WPA2_PASSPHRASE) /* WPA2 passphrase */
+    .pSsid = U_PORT_STRINGIFY_QUOTED(
+        U_WIFI_TEST_CFG_SSID), /* Wifi SSID - replace with your SSID */
+    .authentication =
+        U_WIFI_TEST_CFG_AUTHENTICATION, /* Authentication mode (see uWifiAuth_t
+                                           in wifi/api/u_wifi.h) */
+    .pPassPhrase = U_PORT_STRINGIFY_QUOTED(
+        U_WIFI_TEST_CFG_WPA2_PASSPHRASE) /* WPA2 passphrase */
 };
 static const uNetworkType_t gNetType = U_NETWORK_TYPE_WIFI;
 
@@ -126,33 +131,32 @@ static const uNetworkType_t gNetType = U_NETWORK_TYPE_WIFI;
 // module connected via UART
 static const uDeviceCfg_t gDeviceCfg = {
     .deviceType = U_DEVICE_TYPE_CELL,
-    .deviceCfg = {
-        .cfgCell = {
-            .moduleType = U_CFG_TEST_CELL_MODULE_TYPE,
-            .pSimPinCode = NULL, /* SIM pin */
-            .pinEnablePower = U_CFG_APP_PIN_CELL_ENABLE_POWER,
-            .pinPwrOn = U_CFG_APP_PIN_CELL_PWR_ON,
-            .pinVInt = U_CFG_APP_PIN_CELL_VINT,
-            .pinDtrPowerSaving = U_CFG_APP_PIN_CELL_DTR
+    .deviceCfg =
+        {
+            .cfgCell = {.moduleType = U_CFG_TEST_CELL_MODULE_TYPE,
+                        .pSimPinCode = NULL, /* SIM pin */
+                        .pinEnablePower = U_CFG_APP_PIN_CELL_ENABLE_POWER,
+                        .pinPwrOn = U_CFG_APP_PIN_CELL_PWR_ON,
+                        .pinVInt = U_CFG_APP_PIN_CELL_VINT,
+                        .pinDtrPowerSaving = U_CFG_APP_PIN_CELL_DTR},
         },
-    },
     .transportType = U_DEVICE_TRANSPORT_TYPE_UART,
-    .transportCfg = {
-        .cfgUart = {
-            .uart = U_CFG_APP_CELL_UART,
-            .baudRate = U_CELL_UART_BAUD_RATE,
-            .pinTxd = U_CFG_APP_PIN_CELL_TXD,
-            .pinRxd = U_CFG_APP_PIN_CELL_RXD,
-            .pinCts = U_CFG_APP_PIN_CELL_CTS,
-            .pinRts = U_CFG_APP_PIN_CELL_RTS
+    .transportCfg =
+        {
+            .cfgUart = {.uart = U_CFG_APP_CELL_UART,
+                        .baudRate = U_CELL_UART_BAUD_RATE,
+                        .pinTxd = U_CFG_APP_PIN_CELL_TXD,
+                        .pinRxd = U_CFG_APP_PIN_CELL_RXD,
+                        .pinCts = U_CFG_APP_PIN_CELL_CTS,
+                        .pinRts = U_CFG_APP_PIN_CELL_RTS},
         },
-    },
 };
 // NETWORK configuration for cellular
 static const uNetworkCfgCell_t gNetworkCfg = {
     .type = U_NETWORK_TYPE_CELL,
-    .pApn = NULL, /* APN: NULL to accept default.  If using a Thingstream SIM enter "tsiot" here */
-    .timeoutSeconds = 240 /* Connection timeout in seconds */
+    .pApn = "iliad", /* APN: NULL to accept default.  If using a Thingstream SIM
+                        enter "tsiot" here */
+    .timeoutSeconds = 5000 /* Connection timeout in seconds */
     // There is an additional field here "pKeepGoingCallback",
     // which we do NOT set, we allow the compiler to set it to 0
     // and all will be fine. You may set the field to a function
@@ -181,117 +185,114 @@ static const uNetworkType_t gNetType = U_NETWORK_TYPE_CELL;
  * PUBLIC FUNCTIONS: THE EXAMPLE
  * -------------------------------------------------------------- */
 
+char buffer[20000] = {0};
+
 // The entry point, main(): before this is called the system
 // clocks must have been started and the RTOS must be running;
 // we are in task space.
-U_PORT_TEST_FUNCTION("[example]", "exampleHttpClient")
-{
-    uDeviceHandle_t devHandle = NULL;
-    uHttpClientContext_t *pContext = NULL;
-    uHttpClientConnection_t connection = U_HTTP_CLIENT_CONNECTION_DEFAULT;
-    uSecurityTlsSettings_t tlsSettings = U_SECURITY_TLS_SETTINGS_DEFAULT;
-    char serialNumber[U_SECURITY_SERIAL_NUMBER_MAX_LENGTH_BYTES];
-    char path[U_SECURITY_SERIAL_NUMBER_MAX_LENGTH_BYTES + 10];
-    char buffer[32] = {0};
-    size_t size = sizeof(buffer);
-    int32_t statusCode = 0;
-    int32_t returnCode;
+U_PORT_TEST_FUNCTION("[example]", "exampleHttpClient") {
+  uDeviceHandle_t devHandle = NULL;
+  uHttpClientContext_t *pContext = NULL;
+  uHttpClientConnection_t connection = U_HTTP_CLIENT_CONNECTION_DEFAULT;
+  uSecurityTlsSettings_t tlsSettings = U_SECURITY_TLS_SETTINGS_DEFAULT;
+  char serialNumber[U_SECURITY_SERIAL_NUMBER_MAX_LENGTH_BYTES];
+  char path[U_SECURITY_SERIAL_NUMBER_MAX_LENGTH_BYTES + 10];
+  size_t size = sizeof(buffer);
+  int32_t statusCode = 0;
+  int32_t returnCode;
 
-    // Initialise the APIs we will need
-    uPortInit();
-    uDeviceInit();
+  // Initialise the APIs we will need
+  uPortInit();
+  uDeviceInit();
 
-    // Open the device
-    returnCode = uDeviceOpen(&gDeviceCfg, &devHandle);
-    uPortLog("Opened device with return code %d.\n", returnCode);
+  // Open the device
+  returnCode = uDeviceOpen(&gDeviceCfg, &devHandle);
+  uPortLog("Opened device with return code %d.\n", returnCode);
 
-    // Bring up the network interface
-    uPortLog("Bringing up the network...\n");
-    if (uNetworkInterfaceUp(devHandle, gNetType,
-                            &gNetworkCfg) == 0) {
+  // Bring up the network interface
+  uPortLog("Bringing up the network...\n");
+  if (uNetworkInterfaceUp(devHandle, gNetType, &gNetworkCfg) == 0) {
 
-        // Note: since devHandle is a cellular
-        // handle, any of the `cell` API calls could
-        // be made here using it.
+    // Note: since devHandle is a cellular
+    // handle, any of the `cell` API calls could
+    // be made here using it.
 
-        // In order to create a unique path on the public
-        // server which won't collide with anyone else,
-        // we make the path the serial number of the
-        // module
-        uSecurityGetSerialNumber(devHandle, serialNumber);
-        snprintf(path, sizeof(path), "/%s.html", serialNumber);
+    // In order to create a unique path on the public
+    // server which won't collide with anyone else,
+    // we make the path the serial number of the
+    // module
+    uSecurityGetSerialNumber(devHandle, serialNumber);
+    snprintf(path, sizeof(path), "/json/46.18.28.242");
 
-        // Set the URL of the server; each instance
-        // is associated with a single server -
-        // you may create more than one insance,
-        // for different servers, or close and
-        // open instances to access more than one
-        // server.  There are other settings in
-        // uHttpClientConnection_t, but for the
-        // purposes of this example they can be
-        // left at defaults
-        connection.pServerName = MY_SERVER_NAME;
+    // Set the URL of the server; each instance
+    // is associated with a single server -
+    // you may create more than one insance,
+    // for different servers, or close and
+    // open instances to access more than one
+    // server.  There are other settings in
+    // uHttpClientConnection_t, but for the
+    // purposes of this example they can be
+    // left at defaults
+    connection.pServerName = MY_SERVER_NAME;
 
-        // Create an HTTPS instance for the server; to
-        // create an HTTP instance instead you would
-        // replace &tlsSettings with NULL (and of
-        // course use port 8080 on the test HTTP server).
-        pContext = pUHttpClientOpen(devHandle, &connection, &tlsSettings);
-        if (pContext != NULL) {
+    // Create an HTTPS instance for the server; to
+    // create an HTTP instance instead you would
+    // replace &tlsSettings with NULL (and of
+    // course use port 8080 on the test HTTP server).
+    pContext = pUHttpClientOpen(devHandle, &connection, &tlsSettings);
+    if (pContext != NULL) {
+            int i = 0;
+      // GET it back again
+      while ((statusCode = uHttpClientGetRequest(pContext, "/facts", buffer, &size,
+                                                 NULL)) == -1) {
+        vTaskDelay(100);
+        uPortLog("Retry");
+                    ++i;
+                    if (i >= 3) {
+                        break;
+                    }
+      }
+      if (statusCode == 200) {
 
-            // POST some data to the server; doesn't have to be text,
-            // can be anything, including binary data, though obviously
-            // you must give the appropriate content-type
-            statusCode = uHttpClientPostRequest(pContext, path, gpMyData, strlen(gpMyData), "text/plain");
-            if (statusCode == 200) {
+        uPortLog("GET the data: it was \"%s\" (%d byte(s)).\n", buffer, size);
 
-                uPortLog("POST some data to the file \"%s\" on %s.\n", path, MY_SERVER_NAME);
+      } else {
+        uPortLog("Unable to GET file \"%s\" from %s; status code was %d!\n",
+                 path, MY_SERVER_NAME, statusCode);
+        statusCode = uHttpClientGetRequest(pContext, path, buffer, &size, NULL);
+      }
 
-                // GET it back again
-                statusCode = uHttpClientGetRequest(pContext, path, buffer, &size, NULL);
-                if (statusCode == 200) {
+      // Close the HTTP instance again
+      uHttpClientClose(pContext);
 
-                    uPortLog("GET the data: it was \"%s\" (%d byte(s)).\n", buffer, size);
-
-                } else {
-                    uPortLog("Unable to GET file \"%s\" from %s; status code was %d!\n",
-                             path, MY_SERVER_NAME, statusCode);
-                }
-            } else {
-                uPortLog("Unable to POST file \"%s\" to %s; status code was %d!\n",
-                         path, MY_SERVER_NAME, statusCode);
-            }
-
-            // Close the HTTP instance again
-            uHttpClientClose(pContext);
-
-        } else {
-            uPortLog("Unable to create HTTP instance!\n");
-        }
-
-        // When finished with the network layer
-        uPortLog("Taking down network...\n");
-        uNetworkInterfaceDown(devHandle, gNetType);
     } else {
-        uPortLog("Unable to bring up the network!\n");
+      uPortLog("Unable to create HTTP instance!\n");
     }
 
-    // Close the device
-    // Note: we don't power the device down here in order
-    // to speed up testing; you may prefer to power it off
-    // by setting the second parameter to true.
-    uDeviceClose(devHandle, false);
+    // When finished with the network layer
+    uPortLog("Taking down network...\n");
+    uNetworkInterfaceDown(devHandle, gNetType);
+  } else {
+    uPortLog("Unable to bring up the network!\n");
+  }
 
-    // Tidy up
-    uDeviceDeinit();
-    uPortDeinit();
+  // Close the device
+  // Note: we don't power the device down here in order
+  // to speed up testing; you may prefer to power it off
+  // by setting the second parameter to true.
+  uDeviceClose(devHandle, false);
 
-    uPortLog("Done.\n");
+  // Tidy up
+  uDeviceDeinit();
+  uPortDeinit();
+
+  uPortLog("Done.\n");
 
 #ifdef U_CFG_TEST_CELL_MODULE_TYPE
-    // For u-blox internal testing only
-    EXAMPLE_FINAL_STATE((pContext == NULL) || ((statusCode == 200) &&
-                                               (memcmp(buffer, gpMyData, strlen(gpMyData)) == 0)));
+  // For u-blox internal testing only
+  EXAMPLE_FINAL_STATE((pContext == NULL) ||
+                      ((statusCode == 200) &&
+                       (memcmp(buffer, gpMyData, strlen(gpMyData)) == 0)));
 #endif
 }
 
